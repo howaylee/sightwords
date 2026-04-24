@@ -98,6 +98,8 @@
             perspective: 1000px;
             cursor: pointer;
             position: relative;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
         }
 
         .card {
@@ -575,8 +577,13 @@
             card.classList.remove('is-flipped');
         }
 
+        let isFlipping = false;
+
         function flipCard() {
+            if (isFlipping) return;
+            isFlipping = true;
             card.classList.toggle('is-flipped');
+            setTimeout(() => { isFlipping = false; }, 600);
         }
 
         function nextCard() {
