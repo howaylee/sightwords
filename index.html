@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Grace 单词大冒险</title>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Noto+Sans+SC:wght@400;700&display=swap');
 
@@ -212,8 +213,88 @@
 
         .counter {
             margin-top: 10px;
-            font-size: 12px;
+            font-size: 13px;
+            color: #FF6B6B;
+            font-weight: bold;
+            min-height: 20px;
+            line-height: 1.4;
+        }
+
+        /* ========== 通关弹窗 ========== */
+ .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-overlay.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 24px;
+            padding: 30px 25px;
+            text-align: center;
+            max-width: 300px;
+            width: 85%;
+            box-shadow: 0 10px 40px rgba(255, 107, 107, 0.2);
+            transform: scale(0.8);
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .modal-overlay.show .modal-content {
+            transform: scale(1);
+        }
+
+        .modal-emoji {
+            font-size: 56px;
+            margin-bottom: 8px;
+            animation: modalBounce 0.6s ease infinite alternate;
+        }
+
+        @keyframes modalBounce {
+            from { transform: translateY(0); }
+            to { transform: translateY(-8px); }
+        }
+
+        .modal-title {
+            font-size: 22px;
+            color: #FF6B6B;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .modal-desc {
+            font-size: 14px;
             color: #999;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .modal-btn {
+            background: linear-gradient(135deg, #4FACFE, #84fab0);
+            color: white;
+            border: none;
+            padding: 11px 28px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 25px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(79, 172, 254, 0.4);
+            transition: 0.2s;
+        }
+
+        .modal-btn:active {
+            transform: scale(0.95);
         }
 
         @keyframes bounce {
@@ -551,8 +632,22 @@
             const percentage = ((currentIndex + 1) / currentList.length) * 100;
             progressBar.style.width = percentage + "%";
             
-            // 更新计数器
-            counterDisplay.innerText = `${currentIndex + 1} / ${currentList.length}`;
+            // 更新游戏化计数器（击败怪兽风格）
+            const defeated = currentIndex + 1;
+            const remaining = currentList.length - defeated;
+            const total = currentList.length;
+            if (remaining > 0) {
+                const hints = [
+                    `🗡️ 已击败 ${defeated} 只单词怪兽，还剩 ${remaining} 只！`,
+                    `⚔️ 太棒了！${defeated}/${total} 只怪兽已被你打败！`,
+                    `💪 Grace 勇士！再消灭 ${remaining} 只就通关啦！`,
+                    `🔥 ${defeated} 只已拿下！还有 ${remaining} 只在等你！`,
+                    `🌟 进度 ${defeated}/${total}，加油快通关了！`
+                ];
+                counterDisplay.innerText = hints[Math.floor(Math.random() * hints.length)];
+            } else {
+                counterDisplay.innerText = `🏆 全部 ${total} 只怪兽被击败！完美通关！`;
+            }
 
             // 收起详情区域
             isShowDetail = false;
@@ -571,16 +666,56 @@
             }
         }
 
+        // 撒花特效
+        function triggerConfetti() {
+            const colors = ['#FF9A9E', '#FECFEF', '#84fab0', '#8fd3f4', '#4FACFE', '#FFD700'];
+            confetti({ particleCount: 100, angle: 60, spread: 55, origin: { x: 0 }, colors: colors });
+            confetti({ particleCount: 100, angle: 120, spread: 55, origin: { x: 1 }, colors: colors });
+        }
+
+        // 通关庆祝弹窗
+        function showVictoryModal(total) {
+            const messages = [
+                ['🎉 通关大胜利！', `太厉害了！Grace 一共击败了 ${total} 只单词怪兽！<br>没有一只逃掉！`],
+                ['🏆 勇士荣耀！', `恭喜你！${total} 个单词全部被你征服！<br>Grace 是最棒的单词勇士！`],
+                ['⭐ 完美挑战！', `哇！${total} 只怪兽全军覆没！<br>准备好迎接下一轮挑战了吗？`],
+                ['🌟 超级英雄！', `不可思议！你打败了全部 ${total} 个单词怪！<br>再来一轮变得更强大吧！`]
+            ];
+            const pick = messages[Math.floor(Math.random() * messages.length)];
+            const overlay = document.createElement('div');
+            overlay.className = 'modal-overlay';
+            overlay.innerHTML = `
+                <div class="modal-content">
+                    <div class="modal-emoji">🎊</div>
+                    <div class="modal-title">${pick[0]}</div>
+                    <div class="modal-desc">${pick[1]}</div>
+                    <button class="modal-btn" onclick="this.closest('.modal-overlay').remove(); restartLevel();">🔄 再来一局</button>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+            requestAnimationFrame(() => overlay.classList.add('show'));
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) overlay.remove();
+            });
+        }
+
+        // 重新开始当前等级
+        function restartLevel() {
+            currentList = shuffle([...currentList]);
+            currentIndex = 0;
+            renderCard();
+        }
+
         function nextCard() {
             if (currentIndex < currentList.length - 1) {
                 currentIndex++;
                 renderCard();
             } else {
-                if(confirm("太棒了！本关单词已学完！要重新打乱顺序再练一次吗？")) {
-                    currentList = shuffle([...currentList]);
-                    currentIndex = 0;
-                    renderCard();
-                }
+                // 通关撒花 + 庆祝弹窗
+                triggerConfetti();
+                setTimeout(() => {
+                    showVictoryModal(currentList.length);
+                }, 500);
             }
         }
 
