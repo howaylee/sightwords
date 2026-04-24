@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Grace 单词大冒险</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Noto+Sans+SC:wght@400;700&display=swap');
+
+        :root {
+            --primary: #FF9A9E;
+            --secondary: #FECFEF;
+            --accent: #84fab0;
+            --text: #555;
+            --card-bg: #fff;
+        }
+
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: #f6f9fc;
+            background-image: radial-gradient(#dfe9f3 1px, transparent 1px);
+            background-size: 20px 20px;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+            color: var(--text);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 15px;
+            width: 90%;
+            max-width: 400px;
+        }
+
+        .title {
+            font-family: 'Fredoka One', cursive;
+            color: #FF6B6B;
+            font-size: 24px;
+            text-shadow: 2px 2px 0px #fff;
+            margin: 0 0 10px 0;
+        }
+
+        /* 下拉选择器样式 */
+        .level-select-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+
+        select {
+            appearance: none;
+            background-color: #4FACFE;
+            color: white;
+            padding: 8px 30px 8px 15px;
+            border-radius: 20px;
+            border: none;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            outline: none;
+        }
+
+        .select-arrow {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: white;
+            pointer-events: none;
+            font-size: 12px;
+        }
+
+        .progress-container {
+            width: 80%;
+            max-width: 300px;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            margin: 15px 0;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #84fab0 0%, #8fd3f4 100%);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .scene {
+            width: 300px;
+            height: 400px;
+            perspective: 1000px;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .card {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+            border-radius: 30px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        }
+
+        .card.is-flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            box-sizing: border-box;
+            background: var(--card-bg);
+            border: 5px solid white;
+        }
+
+        .card-front {
+            background: linear-gradient(135deg, #fff 0%, #fefefe 100%);
+        }
+
+        .word-text {
+            font-family: 'Fredoka One', cursive;
+            font-size: 55px; /* 稍微调小一点以适应长单词 */
+            color: #4FACFE;
+            margin-bottom: 20px;
+            word-break: break-all;
+            text-align: center;
+            line-height: 1.1;
+        }
+
+        .tap-hint {
+            font-size: 13px;
+            color: #ccc;
+            position: absolute;
+            bottom: 25px;
+            animation: bounce 2s infinite;
+        }
+
+        .card-back {
+            background: #fff8e1;
+            transform: rotateY(180deg);
+            text-align: center;
+        }
+
+        .back-word {
+            font-family: 'Fredoka One', cursive;
+            font-size: 28px;
+            color: #FF6B6B;
+            margin-bottom: 10px;
+        }
+
+        .cn-meaning {
+            font-size: 22px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .sentence-block {
+            width: 90%;
+            background: rgba(255,255,255,0.6);
+            padding: 10px 12px;
+            border-radius: 12px;
+            margin-bottom: 8px;
+            text-align: left;
+        }
+
+        .sentence-block:last-child {
+            margin-bottom: 0;
+        }
+
+        .en-sentence {
+            font-size: 14px;
+            color: #666;
+            font-style: italic;
+            line-height: 1.4;
+        }
+
+        .cn-sentence {
+            font-size: 13px;
+            color: #888;
+            line-height: 1.4;
+            margin-top: 4px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 20px;
+            margin-top: 25px;
+        }
+
+        .btn {
+            background: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 50px;
+            font-size: 16px;
+            font-weight: bold;
+            color: #555;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            user-select: none;
+        }
+
+        .btn:active { transform: scale(0.95); }
+        .btn-prev { color: #FF9A9E; }
+        .btn-next { background: #4FACFE; color: white; }
+
+        .counter {
+            margin-top: 10px;
+            font-size: 12px;
+            color: #999;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {transform: translateY(0);}
+            40% {transform: translateY(-8px);}
+            60% {transform: translateY(-4px);}
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1 class="title">Grace 单词大冒险</h1>
+        <div class="level-select-wrapper">
+            <select id="levelSelector" onchange="changeLevel()">
+                <option value="pp">Level 1: Pre-Primer (40词)</option>
+                <option value="p">Level 2: Primer (52词)</option>
+                <option value="g1">Level 3: 1st Grade (41词)</option>
+                <option value="g2">Level 4: 2nd Grade (46词)</option>
+                <option value="g3">Level 5: 3rd Grade (41词)</option>
+            </select>
+            <div class="select-arrow">▼</div>
+        </div>
+        <div class="counter" id="counterDisplay">1 / 40</div>
+    </div>
+
+    <div class="progress-container">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
+
+    <div class="scene" onclick="flipCard()">
+        <div class="card" id="flashcard">
+            <div class="card-face card-front">
+                <div class="word-text" id="frontWord">Loading...</div>
+                <div class="tap-hint">👆 点我翻面 / Tap to Flip</div>
+            </div>
+            <div class="card-face card-back">
+                <div class="back-word" id="backWord"></div>
+                <div class="cn-meaning" id="cnMeaning"></div>
+                <div id="sentencesContainer"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button class="btn btn-prev" onclick="prevCard()">⬅️ 上一个</button>
+        <button class="btn btn-next" onclick="nextCard()">下一个 ➡️</button>
+    </div>
+
+    <script>
+        // --- 数据区 (Data) ---
+        // 为节省空间，部分句子为简短通用句，你也可以自己修改
+        const db = {
+            "pp": [ // Pre-Primer (40 words)
+                {w:"a",c:"一个",s:[{en:"I see a cat.",cn:"我看见一只猫。"},{en:"A dog is running.",cn:"一只狗在跑。"}]},
+                {w:"and",c:"和",s:[{en:"You and I.",cn:"你和我。"},{en:"Milk and bread.",cn:"牛奶和面包。"}]},
+                {w:"away",c:"离开",s:[{en:"Go away.",cn:"走开。"},{en:"Don't run away.",cn:"不要跑开。"}]},
+                {w:"big",c:"大的",s:[{en:"A big dog.",cn:"一只大狗。"},{en:"The elephant is big.",cn:"这头大象很大。"}]},
+                {w:"blue",c:"蓝色",s:[{en:"Blue sky.",cn:"蓝天。"},{en:"I like blue.",cn:"我喜欢蓝色。"}]},
+                {w:"can",c:"能",s:[{en:"I can run.",cn:"我能跑。"},{en:"Can you help?",cn:"你能帮忙吗？"}]},
+                {w:"come",c:"来",s:[{en:"Come here.",cn:"到这儿来。"},{en:"Come with me.",cn:"跟我来。"}]},
+                {w:"down",c:"向下",s:[{en:"Sit down.",cn:"坐下。"},{en:"Look down.",cn:"向下看。"}]},
+                {w:"find",c:"找到",s:[{en:"Find the ball.",cn:"找到那个球。"},{en:"I can't find it.",cn:"我找不到它。"}]},
+                {w:"for",c:"给/为了",s:[{en:"For you.",cn:"给你的。"},{en:"This is for mom.",cn:"这是给妈妈的。"}]},
+                {w:"funny",c:"滑稽的",s:[{en:"Funny clown.",cn:"滑稽的小丑。"},{en:"That is funny!",cn:"那太搞笑了！"}]},
+                {w:"go",c:"去",s:[{en:"Let's go.",cn:"我们走吧。"},{en:"Go to school.",cn:"去上学。"}]},
+                {w:"help",c:"帮助",s:[{en:"Help me.",cn:"帮帮我。"},{en:"Thank you for your help.",cn:"谢谢你的帮助。"}]},
+                {w:"here",c:"这里",s:[{en:"I am here.",cn:"我在这里。"},{en:"Come here, please.",cn:"请到这儿来。"}]},
+                {w:"I",c:"我",s:[{en:"I am happy.",cn:"我很开心。"},{en:"I can do it.",cn:"我能做到。"}]},
+                {w:"in",c:"在里面",s:[{en:"In the box.",cn:"在盒子里。"},{en:"Put it in the bag.",cn:"把它放进包里。"}]},
+                {w:"is",c:"是",s:[{en:"He is nice.",cn:"他很好。"},{en:"She is my friend.",cn:"她是我的朋友。"}]},
+                {w:"it",c:"它",s:[{en:"It is red.",cn:"它是红色的。"},{en:"Where is it?",cn:"它在哪里？"}]},
+                {w:"jump",c:"跳",s:[{en:"Jump up.",cn:"跳起来。"},{en:"Don't jump on the bed.",cn:"别在床上跳。"}]},
+                {w:"little",c:"小的",s:[{en:"Little bird.",cn:"小鸟。"},{en:"A little boy.",cn:"一个小男孩。"}]},
+                {w:"look",c:"看",s:[{en:"Look at me.",cn:"看着我。"},{en:"Look at the stars.",cn:"看看星星。"}]},
+                {w:"make",c:"做/制作",s:[{en:"Make a cake.",cn:"做一个蛋糕。"},{en:"Let's make a card.",cn:"我们来做一张卡片吧。"}]},
+                {w:"me",c:"我(宾格)",s:[{en:"Give me.",cn:"给我。"},{en:"Come with me.",cn:"跟我一起来。"}]},
+                {w:"my",c:"我的",s:[{en:"My toy.",cn:"我的玩具。"},{en:"This is my book.",cn:"这是我的书。"}]},
+                {w:"not",c:"不",s:[{en:"Not now.",cn:"现在不行。"},{en:"It's not a cat.",cn:"那不是猫。"}]},
+                {w:"one",c:"一",s:[{en:"One apple.",cn:"一个苹果。"},{en:"Give me one, please.",cn:"请给我一个。"}]},
+                {w:"play",c:"玩",s:[{en:"Let's play.",cn:"我们一起玩吧。"},{en:"I like to play.",cn:"我喜欢玩。"}]},
+                {w:"red",c:"红色",s:[{en:"Red car.",cn:"红色汽车。"},{en:"The apple is red.",cn:"这个苹果是红的。"}]},
+                {w:"run",c:"跑",s:[{en:"Run fast.",cn:"快跑。"},{en:"Don't run in the hall.",cn:"别在大厅里跑。"}]},
+                {w:"said",c:"说(过去式)",s:[{en:"Mom said no.",cn:"妈妈说不行。"},{en:"He said hello.",cn:"他说了你好。"}]},
+                {w:"see",c:"看见",s:[{en:"I see you.",cn:"我看见你了。"},{en:"I see a star.",cn:"我看见一颗星星。"}]},
+                {w:"the",c:"这个/那个(定冠词)",s:[{en:"The sun.",cn:"太阳。"},{en:"Open the door.",cn:"打开门。"}]},
+                {w:"three",c:"三",s:[{en:"Three pigs.",cn:"三只小猪。"},{en:"I am three.",cn:"我三岁了。"}]},
+                {w:"to",c:"去/到",s:[{en:"Go to bed.",cn:"去睡觉。"},{en:"Nice to meet you.",cn:"很高兴见到你。"}]},
+                {w:"two",c:"二",s:[{en:"Two eyes.",cn:"两只眼睛。"},{en:"I have two hands.",cn:"我有两只手。"}]},
+                {w:"up",c:"向上",s:[{en:"Stand up.",cn:"站起来。"},{en:"Look up at the sky.",cn:"抬头看天空。"}]},
+                {w:"we",c:"我们",s:[{en:"We go.",cn:"我们去。"},{en:"We are friends.",cn:"我们是朋友。"}]},
+                {w:"where",c:"哪里",s:[{en:"Where is it?",cn:"它在哪？"},{en:"Where are you going?",cn:"你要去哪里？"}]},
+                {w:"yellow",c:"黄色",s:[{en:"Yellow duck.",cn:"黄色小鸭。"},{en:"The banana is yellow.",cn:"香蕉是黄色的。"}]},
+                {w:"you",c:"你/你们",s:[{en:"You are good.",cn:"你很棒。"},{en:"I love you.",cn:"我爱你。"}]}
+            ],
+            "p": [ // Primer (52 words)
+                {w:"all",c:"全部",s:[{en:"Eat all food.",cn:"把食物都吃完。"},{en:"All the kids are here.",cn:"所有孩子都在这儿。"}]},
+                {w:"am",c:"是",s:[{en:"I am six.",cn:"我六岁了。"},{en:"I am so happy!",cn:"我好开心！"}]},
+                {w:"are",c:"是",s:[{en:"We are friends.",cn:"我们是朋友。"},{en:"They are playing.",cn:"他们在玩。"}]},
+                {w:"at",c:"在",s:[{en:"Look at that.",cn:"看那个。"},{en:"I am at school.",cn:"我在学校。"}]},
+                {w:"ate",c:"吃(过去式)",s:[{en:"He ate cake.",cn:"他吃了蛋糕。"},{en:"She ate an apple.",cn:"她吃了一个苹果。"}]},
+                {w:"be",c:"成为/是",s:[{en:"Be good.",cn:"要乖哦。"},{en:"Be quiet, please.",cn:"请安静。"}]},
+                {w:"black",c:"黑色",s:[{en:"Black cat.",cn:"黑猫。"},{en:"I have a black pen.",cn:"我有一支黑色的笔。"}]},
+                {w:"brown",c:"棕色",s:[{en:"Brown bear.",cn:"棕熊。"},{en:"He has brown hair.",cn:"他有棕色的头发。"}]},
+                {w:"but",c:"但是",s:[{en:"Small but strong.",cn:"小但强壮。"},{en:"I'm sorry but I can't.",cn:"抱歉但我不能。"}]},
+                {w:"came",c:"来(过去式)",s:[{en:"Dad came home.",cn:"爸爸回家了。"},{en:"She came to my party.",cn:"她来参加了我的聚会。"}]},
+                {w:"did",c:"做(过去式)",s:[{en:"I did it!",cn:"我做到了！"},{en:"Did you see that?",cn:"你看到了吗？"}]},
+                {w:"do",c:"做",s:[{en:"Do your work.",cn:"做你的作业。"},{en:"What do you want?",cn:"你想要什么？"}]},
+                {w:"eat",c:"吃",s:[{en:"Eat apples.",cn:"吃苹果。"},{en:"Time to eat dinner.",cn:"该吃晚饭了。"}]},
+                {w:"four",c:"四",s:[{en:"Four legs.",cn:"四条腿。"},{en:"I have four pencils.",cn:"我有四支铅笔。"}]},
+                {w:"get",c:"得到",s:[{en:"Get the ball.",cn:"拿到那个球。"},{en:"Let's get some ice cream.",cn:"我们去买点冰淇淋吧。"}]},
+                {w:"good",c:"好的",s:[{en:"Good job.",cn:"做得好！"},{en:"Good morning!",cn:"早上好！"}]},
+                {w:"have",c:"有",s:[{en:"I have a dog.",cn:"我有一只狗。"},{en:"Do you have a sister?",cn:"你有姐妹吗？"}]},
+                {w:"he",c:"他",s:[{en:"He is tall.",cn:"他很高。"},{en:"He likes to play.",cn:"他喜欢玩。"}]},
+                {w:"into",c:"进入",s:[{en:"Go into the house.",cn:"进屋去。"},{en:"Jump into the water.",cn:"跳进水里。"}]},
+                {w:"like",c:"喜欢",s:[{en:"I like you.",cn:"我喜欢你。"},{en:"I like to read books.",cn:"我喜欢看书。"}]},
+                {w:"must",c:"必须",s:[{en:"I must go.",cn:"我必须走了。"},{en:"You must be careful.",cn:"你必须小心。"}]},
+                {w:"new",c:"新的",s:[{en:"New shoes.",cn:"新鞋子。"},{en:"I have a new friend.",cn:"我交了一个新朋友。"}]},
+                {w:"no",c:"不/没有",s:[{en:"No cookies.",cn:"没有饼干。"},{en:"No, thank you.",cn:"不用了，谢谢。"}]},
+                {w:"now",c:"现在",s:[{en:"Come now.",cn:"现在就来。"},{en:"It is raining now.",cn:"现在下雨了。"}]},
+                {w:"on",c:"在...上",s:[{en:"On the table.",cn:"在桌子上。"},{en:"Put on your coat.",cn:"穿上你的外套。"}]},
+                {w:"our",c:"我们的",s:[{en:"Our house.",cn:"我们的房子。"},{en:"This is our classroom.",cn:"这是我们的教室。"}]},
+                {w:"out",c:"外面",s:[{en:"Go out.",cn:"出去。"},{en:"Let's go out and play.",cn:"我们出去玩吧。"}]},
+                {w:"please",c:"请",s:[{en:"Please help.",cn:"请帮忙。"},{en:"One more, please.",cn:"请再来一个。"}]},
+                {w:"pretty",c:"漂亮的",s:[{en:"Pretty flower.",cn:"漂亮的花。"},{en:"You look pretty today.",cn:"你今天很漂亮。"}]},
+                {w:"ran",c:"跑(过去式)",s:[{en:"He ran fast.",cn:"他跑得很快。"},{en:"She ran to school.",cn:"她跑向学校。"}]},
+                {w:"ride",c:"骑/坐",s:[{en:"Ride a bike.",cn:"骑自行车。"},{en:"Can I ride the horse?",cn:"我可以骑马吗？"}]},
+                {w:"saw",c:"看见(过去式)",s:[{en:"I saw a bird.",cn:"我看见了一只鸟。"},{en:"I saw him yesterday.",cn:"我昨天看见他了。"}]},
+                {w:"say",c:"说",s:[{en:"Say hello.",cn:"说你好。"},{en:"What did you say?",cn:"你说什么？"}]},
+                {w:"she",c:"她",s:[{en:"She is happy.",cn:"她很开心。"},{en:"She is my best friend.",cn:"她是我最好的朋友。"}]},
+                {w:"so",c:"如此/所以",s:[{en:"So big.",cn:"这么大。"},{en:"I am so tired.",cn:"我好累啊。"}]},
+                {w:"soon",c:"不久",s:[{en:"See you soon.",cn:"回头见。"},{en:"Dad will come home soon.",cn:"爸爸很快就回家。"}]},
+                {w:"that",c:"那个",s:[{en:"That is mine.",cn:"那是我的。"},{en:"Who is that?",cn:"那是谁？"}]},
+                {w:"there",c:"那里",s:[{en:"Over there.",cn:"在那边。"},{en:"There it is!",cn:"它就在那儿！"}]},
+                {w:"they",c:"他们",s:[{en:"They play.",cn:"他们在玩。"},{en:"They are my friends.",cn:"他们是我的朋友。"}]},
+                {w:"this",c:"这个",s:[{en:"This is fun.",cn:"这很有趣。"},{en:"This is for you.",cn:"这个是给你的。"}]},
+                {w:"too",c:"也/太",s:[{en:"Me too.",cn:"我也是。"},{en:"You are too nice.",cn:"你太好了。"}]},
+                {w:"under",c:"在下面",s:[{en:"Under the bed.",cn:"在床底下。"},{en:"The cat is under the table.",cn:"猫在桌子下面。"}]},
+                {w:"want",c:"想要",s:[{en:"I want candy.",cn:"我想要糖果。"},{en:"What do you want to eat?",cn:"你想吃什么？"}]},
+                {w:"was",c:"是(过去式)",s:[{en:"He was sad.",cn:"他很伤心。"},{en:"Yesterday was fun.",cn:"昨天很好玩。"}]},
+                {w:"well",c:"好/身体好",s:[{en:"Very well.",cn:"非常好。"},{en:"Are you well?",cn:"你好吗？"}]},
+                {w:"went",c:"去(过去式)",s:[{en:"We went home.",cn:"我们回家了。"},{en:"They went to the park.",cn:"他们去了公园。"}]},
+                {w:"what",c:"什么",s:[{en:"What is this?",cn:"这是什么？"},{en:"What is your name?",cn:"你叫什么名字？"}]},
+                {w:"white",c:"白色",s:[{en:"White snow.",cn:"白雪。"},{en:"I have a white cat.",cn:"我有一只白猫。"}]},
+                {w:"who",c:"谁",s:[{en:"Who is he?",cn:"他是谁？"},{en:"Who wants to play?",cn:"想玩吗？"}]},
+                {w:"will",c:"将会",s:[{en:"I will go.",cn:"我会去的。"},{en:"Will you help me?",cn:"你能帮我吗？"}]},
+                {w:"with",c:"和...一起",s:[{en:"Come with me.",cn:"跟我一起来。"},{en:"I play with my friends.",cn:"我和朋友们一起玩。"}]},
+                {w:"yes",c:"是的",s:[{en:"Yes, please.",cn:"好的，谢谢。"},{en:"Yes, I do.",cn:"是的，我是。"}]}
+            ],
+            "g1": [ // 1st Grade (41 words)
+                {w:"after",c:"在...之后",s:[{en:"After school.",cn:"放学后。"},{en:"Let's play after dinner.",cn:"晚饭后我们再玩吧。"}]},
+                {w:"again",c:"再一次",s:[{en:"Try again.",cn:"再试一次。"},{en:"Do it again.",cn:"再做一次。"}]},
+                {w:"an",c:"一个",s:[{en:"An apple.",cn:"一个苹果。"},{en:"I see an elephant.",cn:"我看见一头大象。"}]},
+                {w:"any",c:"任何",s:[{en:"Any color.",cn:"任何颜色都行。"},{en:"Do you have any questions?",cn:"你有什么问题吗？"}]},
+                {w:"as",c:"如同/作为",s:[{en:"As big as me.",cn:"和我一样大。"},{en:"Run as fast as you can.",cn:"尽可能快地跑。"}]},
+                {w:"ask",c:"问",s:[{en:"Ask mom.",cn:"问问妈妈。"},{en:"Can I ask a question?",cn:"我可以问个问题吗？"}]},
+                {w:"by",c:"在旁边/被",s:[{en:"By the tree.",cn:"在树旁边。"},{en:"Sit by me.",cn:"坐在我旁边。"}]},
+                {w:"could",c:"能够(过去式)",s:[{en:"Could you help?",cn:"你能帮忙吗？"},{en:"I could do it.",cn:"我能做到的。"}]},
+                {w:"every",c:"每一个",s:[{en:"Every day.",cn:"每一天。"},{en:"I love every color.",cn:"我喜欢每一种颜色。"}]},
+                {w:"fly",c:"飞",s:[{en:"Birds fly.",cn:"鸟儿会飞。"},{en:"I want to fly.",cn:"我想飞。"}]},
+                {w:"from",c:"来自/从",s:[{en:"From me.",cn:"从我这里。"},{en:"I am from China.",cn:"我来自中国。"}]},
+                {w:"give",c:"给",s:[{en:"Give it back.",cn:"把它还回来。"},{en:"Give me a hug.",cn:"给我一个拥抱。"}]},
+                {w:"going",c:"去(进行时)",s:[{en:"I am going.",cn:"我正要走。"},{en:"Where are you going?",cn:"你要去哪里？"}]},
+                {w:"had",c:"有(过去式)",s:[{en:"I had a toy.",cn:"我有一个玩具。"},{en:"We had fun today.",cn:"我们今天玩得很开心。"}]},
+                {w:"has",c:"有",s:[{en:"She has a doll.",cn:"她有一个娃娃。"},{en:"He has a red car.",cn:"他有一辆红色汽车。"}]},
+                {w:"her",c:"她的",s:[{en:"Her bag.",cn:"她的包。"},{en:"This is her book.",cn:"这是她的书。"}]},
+                {w:"him",c:"他(宾格)",s:[{en:"Tell him.",cn:"告诉他。"},{en:"I help him with homework.",cn:"我帮他做作业。"}]},
+                {w:"his",c:"他的",s:[{en:"His hat.",cn:"他的帽子。"},{en:"His name is Tom.",cn:"他的名字叫汤姆。"}]},
+                {w:"how",c:"如何",s:[{en:"How are you?",cn:"你好吗？"},{en:"How old are you?",cn:"你几岁了？"}]},
+                {w:"just",c:"刚刚/只是",s:[{en:"Just now.",cn:"刚刚。"},{en:"I just want to play.",cn:"我只是想玩。"}]},
+                {w:"know",c:"知道",s:[{en:"I know it!",cn:"我知道！"},{en:"Do you know the answer?",cn:"你知道答案吗？"}]},
+                {w:"let",c:"让",s:[{en:"Let me see.",cn:"让我看看。"},{en:"Let us go!",cn:"让我们走吧！"}]},
+                {w:"live",c:"居住",s:[{en:"We live here.",cn:"我们住在这里。"},{en:"Where do you live?",cn:"你住在哪里？"}]},
+                {w:"may",c:"可以",s:[{en:"May I go?",cn:"我可以走吗？"},{en:"May I have some water?",cn:"我可以喝点水吗？"}]},
+                {w:"of",c:"...的",s:[{en:"Cup of tea.",cn:"一杯茶。"},{en:"A box of cookies.",cn:"一盒饼干。"}]},
+                {w:"old",c:"老的/旧的",s:[{en:"Old car.",cn:"旧车。"},{en:"How old are you?",cn:"你多大了？"}]},
+                {w:"once",c:"曾经/一次",s:[{en:"Once upon a time...",cn:"从前……"},{en:"I go there once a week.",cn:"我每周去那里一次。"}]},
+                {w:"open",c:"打开",s:[{en:"Open the door.",cn:"把门打开。"},{en:"Open your eyes.",cn:"睁开你的眼睛。"}]},
+                {w:"over",c:"结束/越过",s:[{en:"Game over.",cn:"游戏结束。"},{en:"Jump over the rope.",cn:"跳过绳子。"}]},
+                {w:"put",c:"放置",s:[{en:"Put it down.",cn:"把它放下。"},{en:"Put on your shoes.",cn:"穿上你的鞋子。"}]},
+                {w:"round",c:"圆的",s:[{en:"Round ball.",cn:"圆球。"},{en:"The earth is round.",cn:"地球是圆的。"}]},
+                {w:"some",c:"一些",s:[{en:"Some water.",cn:"一些水。"},{en:"I want some cake.",cn:"我想要一些蛋糕。"}]},
+                {w:"stop",c:"停止",s:[{en:"Stop the bus.",cn:"让公交车停下。"},{en:"Stop running!",cn:"别跑了！"}]},
+                {w:"take",c:"拿/取",s:[{en:"Take a cookie.",cn:"拿一块饼干。"},{en:"Take your time.",cn:"慢慢来，不着急。"}]},
+                {w:"thank",c:"谢谢",s:[{en:"Thank you.",cn:"谢谢你。"},{en:"Thanks for helping me.",cn:"谢谢你的帮助。"}]},
+                {w:"them",c:"他们(宾格)",s:[{en:"Look at them.",cn:"看看他们。"},{en:"Tell them to come.",cn:"叫他们过来。"}]},
+                {w:"then",c:"那时/然后",s:[{en:"And then?",cn:"然后呢？"},{en:"Let's eat, then play.",cn:"我们先吃饭，然后再玩。"}]},
+                {w:"think",c:"想/认为",s:[{en:"I think so.",cn:"我也这么想。"},{en:"What do you think?",cn:"你觉得呢？"}]},
+                {w:"walk",c:"走路",s:[{en:"Walk fast.",cn:"走快点。"},{en:"Let's walk to school.",cn:"我们步行去学校吧。"}]},
+                {w:"were",c:"是(过去式)",s:[{en:"We were happy.",cn:"我们很开心。"},{en:"They were at home.",cn:"他们当时在家。"}]},
+                {w:"when",c:"什么时候",s:[{en:"When is lunch?",cn:"午饭什么时候吃？"},{en:"When is your birthday?",cn:"你的生日是什么时候？"}]}
+            ],
+            "g2": [ // 2nd Grade (46 words)
+               {w:"always",c:"总是",s:[{en:"Always happy.",cn:"总是很开心。"},{en:"I always brush my teeth.",cn:"我总是刷牙。"}]},
+               {w:"around",c:"周围",s:[{en:"Look around.",cn:"四处看看。"},{en:"Walk around the park.",cn:"在公园周围走走。"}]},
+               {w:"because",c:"因为",s:[{en:"Because I can.",cn:"因为我能。"},{en:"I like it because it's fun.",cn:"我喜欢它因为它很有趣。"}]},
+               {w:"been",c:"是(分词)",s:[{en:"Have you been?",cn:"你去过吗？"},{en:"I have been there.",cn:"我去过那里。"}]},
+               {w:"before",c:"之前",s:[{en:"Before bed.",cn:"睡觉前。"},{en:"Wash hands before eating.",cn:"吃饭前要洗手。"}]},
+               {w:"best",c:"最好的",s:[{en:"Best friend.",cn:"最好的朋友。"},{en:"You are my best friend.",cn:"你是我最好的朋友。"}]},
+               {w:"both",c:"两者/都",s:[{en:"Both hands.",cn:"两只手。"},{en:"We both like ice cream.",cn:"我们都喜欢冰淇淋。"}]},
+               {w:"buy",c:"买",s:[{en:"Buy toys.",cn:"买玩具。"},{en:"Can I buy this?",cn:"我可以买这个吗？"}]},
+               {w:"call",c:"呼叫/打电话",s:[{en:"Call dad.",cn:"给爸爸打电话。"},{en:"Please call me later.",cn:"请稍后给我打电话。"}]},
+               {w:"cold",c:"冷",s:[{en:"Cold water.",cn:"冷水。"},{en:"It is cold today.",cn:"今天很冷。"}]},
+               {w:"does",c:"做(第三人称)",s:[{en:"He does it.",cn:"他做的。"},{en:"What does she want?",cn:"她想要什么？"}]},
+               {w:"don't",c:"不要",s:[{en:"Don't cry.",cn:"别哭。"},{en:"Don't forget your bag.",cn:"别忘了你的包。"}]},
+               {w:"fast",c:"快",s:[{en:"Run fast.",cn:"跑快点。"},{en:"Too fast!",cn:"太快了！"}]},
+               {w:"first",c:"第一",s:[{en:"First place.",cn:"第一名。"},{en:"Let's do it first.",cn:"我们先做这个吧。"}]},
+               {w:"five",c:"五",s:[{en:"Five fingers.",cn:"五根手指。"},{en:"I am five years old.",cn:"我五岁了。"}]},
+               {w:"found",c:"发现(过去式)",s:[{en:"I found it!",cn:"我找到了！"},{en:"She found a coin.",cn:"她发现了一枚硬币。"}]},
+               {w:"gave",c:"给(过去式)",s:[{en:"He gave me.",cn:"他给了我。"},{en:"Mom gave me a gift.",cn:"妈妈给了我一个礼物。"}]},
+               {w:"goes",c:"去(第三人称)",s:[{en:"She goes home.",cn:"她回家了。"},{en:"He goes to school by bus.",cn:"他坐公交车去上学。"}]},
+               {w:"green",c:"绿色",s:[{en:"Green grass.",cn:"绿草。"},{en:"I like the green shirt.",cn:"我喜欢这件绿色衬衫。"}]},
+               {w:"its",c:"它的",s:[{en:"Its tail.",cn:"它的尾巴。"},{en:"The cat licked its paw.",cn:"猫舔了舔它的爪子。"}]},
+               {w:"made",c:"做(过去式)",s:[{en:"Made of wood.",cn:"木头做的。"},{en:"Mom made a cake.",cn:"妈妈做了一个蛋糕。"}]},
+               {w:"many",c:"许多",s:[{en:"Many toys.",cn:"很多玩具。"},{en:"How many apples?",cn:"多少个苹果？"}]},
+               {w:"off",c:"离开/关",s:[{en:"Turn off.",cn:"关掉。"},{en:"Take off your shoes.",cn:"脱掉鞋子。"}]},
+               {w:"or",c:"或者",s:[{en:"Yes or no?",cn:"是还是不是？"},{en:"Tea or juice?",cn:"茶还是果汁？"}]},
+               {w:"pull",c:"拉",s:[{en:"Pull the rope.",cn:"拉绳子。"},{en:"Pull the door open.",cn:"把门拉开。"}]},
+               {w:"read",c:"读",s:[{en:"Read a book.",cn:"读书。"},{en:"I like to read stories.",cn:"我喜欢读故事。"}]},
+               {w:"right",c:"对的/右边",s:[{en:"Right hand.",cn:"右手。"},{en:"That is right!",cn:"那是对的！"}]},
+               {w:"sing",c:"唱",s:[{en:"Sing a song.",cn:"唱首歌。"},{en:"Let's sing together.",cn:"我们一起唱歌吧。"}]},
+               {w:"sit",c:"坐",s:[{en:"Sit here.",cn:"坐这儿。"},{en:"Please sit down.",cn:"请坐下。"}]},
+               {w:"sleep",c:"睡觉",s:[{en:"Go to sleep.",cn:"去睡觉。"},{en:"I sleep at nine o'clock.",cn:"我九点睡觉。"}]},
+               {w:"tell",c:"告诉",s:[{en:"Tell me.",cn:"告诉我。"},{en:"Tell me a story.",cn:"给我讲个故事吧。"}]},
+               {w:"their",c:"他们的",s:[{en:"Their car.",cn:"他们的车。"},{en:"This is their house.",cn:"这是他们的房子。"}]},
+               {w:"these",c:"这些",s:[{en:"These books.",cn:"这些书。"},{en:"I like these cookies.",cn:"我喜欢这些饼干。"}]},
+               {w:"those",c:"那些",s:[{en:"Those birds.",cn:"那些鸟。"},{en:"Look at those stars.",cn:"看看那些星星。"}]},
+               {w:"upon",c:"在...上",s:[{en:"Once upon a time...",cn:"从前……"},{en:"A crown upon his head.",cn:"他头上的皇冠。"}]},
+               {w:"us",c:"我们(宾格)",s:[{en:"Join us.",cn:"加入我们。"},{en:"Come with us.",cn:"跟我们来。"}]},
+               {w:"use",c:"使用",s:[{en:"Use a fork.",cn:"用叉子。"},{en:"Can I use your pen?",cn:"我可以用一下你的笔吗？"}]},
+               {w:"very",c:"非常",s:[{en:"Very good.",cn:"非常好。"},{en:"Thank you very much.",cn:"非常感谢你。"}]},
+               {w:"wash",c:"洗",s:[{en:"Wash hands.",cn:"洗手。"},{en:"Wash your face.",cn:"洗洗脸。"}]},
+               {w:"which",c:"哪一个",s:[{en:"Which one?",cn:"哪一个？"},{en:"Which color do you like?",cn:"你喜欢哪个颜色？"}]},
+               {w:"why",c:"为什么",s:[{en:"Why not?",cn:"为什么不呢？"},{en:"Why are you crying?",cn:"你为什么哭？"}]},
+               {w:"wish",c:"希望",s:[{en:"Make a wish.",cn:"许个愿。"},{en:"I wish I could fly.",cn:"我希望我能飞。"}]},
+               {w:"work",c:"工作",s:[{en:"Good work.",cn:"干得好。"},{en:"Mom goes to work.",cn:"妈妈去上班。"}]},
+               {w:"would",c:"将要/愿意",s:[{en:"Would you like?",cn:"你想要吗？"},{en:"I would love to!",cn:"我很乐意！"}]},
+               {w:"write",c:"写",s:[{en:"Write name.",cn:"写名字。"},{en:"Let me write it down.",cn:"让我把它写下来。"}]},
+               {w:"your",c:"你的",s:[{en:"Your turn.",cn:"轮到你了。"},{en:"This is your pencil.",cn:"这是你的铅笔。"}]}
+            ],
+            "g3": [ // 3rd Grade (41 words)
+               {w:"about",c:"关于",s:[{en:"About the story.",cn:"关于这个故事。"},{en:"Tell me about your day.",cn:"跟我说说你的一天。"}]},
+               {w:"better",c:"更好的",s:[{en:"I feel better.",cn:"我感觉好多了。"},{en:"Tomorrow will be better.",cn:"明天会更好。"}]},
+               {w:"bring",c:"带来",s:[{en:"Bring a bag.",cn:"带个包来。"},{en:"Bring your book to school.",cn:"把你的书带到学校去。"}]},
+               {w:"carry",c:"携带/搬运",s:[{en:"Carry the box.",cn:"搬这个箱子。"},{en:"Can you carry me?",cn:"你能抱抱我吗？"}]},
+               {w:"clean",c:"干净的/打扫",s:[{en:"Clean room.",cn:"干净的房间。"},{en:"Clean up your toys.",cn:"把玩具收拾干净。"}]},
+               {w:"cut",c:"切/剪",s:[{en:"Cut the paper.",cn:"剪纸。"},{en:"Don't cut your finger.",cn:"别剪到手指哦。"}]},
+               {w:"done",c:"完成",s:[{en:"Well done!",cn:"做得好！"},{en:"I am done with my homework.",cn:"我做完作业了。"}]},
+               {w:"draw",c:"画",s:[{en:"Draw a cat.",cn:"画一只猫。"},{en:"I like to draw pictures.",cn:"我喜欢画画。"}]},
+               {w:"drink",c:"喝",s:[{en:"Drink water.",cn:"喝水。"},{en:"Do you want to drink juice?",cn:"你想喝果汁吗？"}]},
+               {w:"eight",c:"八",s:[{en:"Eight years old.",cn:"八岁了。"},{en:"I have eight crayons.",cn:"我有八支蜡笔。"}]},
+               {w:"fall",c:"落下/秋天",s:[{en:"Fall down.",cn:"摔倒。"},{en:"Leaves fall in autumn.",cn:"叶子在秋天落下。"}]},
+               {w:"far",c:"远的",s:[{en:"Far away.",cn:"很远的地方。"},{en:"Is it far from here?",cn:"离这里远吗？"}]},
+               {w:"full",c:"满的",s:[{en:"Full cup.",cn:"满杯。"},{en:"I am full.",cn:"我吃饱了。"}]},
+               {w:"got",c:"得到(过去式)",s:[{en:"I got it!",cn:"我明白了！"},{en:"I got a new bike.",cn:"我得到了一辆新自行车。"}]},
+               {w:"grow",c:"生长/种植",s:[{en:"Plants grow.",cn:"植物会生长。"},{en:"I want to grow tall.",cn:"我想长高。"}]},
+               {w:"hold",c:"握住/抱",s:[{en:"Hold my hand.",cn:"牵着我的手。"},{en:"Hold on tight!",cn:"抓紧了！"}]},
+               {w:"hot",c:"热",s:[{en:"Hot sun.",cn:"炎热的太阳。"},{en:"The soup is hot.",cn:"汤很烫。"}]},
+               {w:"hurt",c:"受伤/疼",s:[{en:"It hurt.",cn:"它弄疼我了。"},{en:"Don't hurt yourself.",cn:"别伤着自己。"}]},
+               {w:"if",c:"如果",s:[{en:"If you can.",cn:"如果你能的话。"},{en:"If it rains, we stay home.",cn:"如果下雨，我们就待在家里。"}]},
+               {w:"keep",c:"保持/保留",s:[{en:"Keep going.",cn:"继续加油！"},{en:"Keep your room clean.",cn:"保持房间整洁。"}]},
+               {w:"kind",c:"善良的/种类",s:[{en:"Be kind.",cn:"要善良。"},{en:"What kind of fruit?",cn:"哪种水果？"}]},
+               {w:"laugh",c:"笑",s:[{en:"Don't laugh.",cn:"别笑。"},{en:"Let's laugh together.",cn:"我们一起笑吧。"}]},
+               {w:"light",c:"光/轻的",s:[{en:"Turn on light.",cn:"开灯。"},{en:"This box is very light.",cn:"这个盒子很轻。"}]},
+               {w:"long",c:"长的",s:[{en:"Long hair.",cn:"长头发。"},{en:"The line is too long.",cn:"队伍太长了。"}]},
+               {w:"much",c:"许多(不可数)",s:[{en:"Too much.",cn:"太多了。"},{en:"Thank you so much.",cn:"非常感谢你。"}]},
+               {w:"myself",c:"我自己",s:[{en:"By myself.",cn:"我自己（独立地）。"},{en:"I can do it myself.",cn:"我自己能做。"}]},
+               {w:"never",c:"从不",s:[{en:"Never give up.",cn:"永不放弃。"},{en:"I am never late.",cn:"我从不迟到。"}]},
+               {w:"only",c:"仅仅/只有",s:[{en:"Only one.",cn:"只有一个。"},{en:"I only want one.",cn:"我只想要一个。"}]},
+               {w:"own",c:"自己的",s:[{en:"My own room.",cn:"我自己的房间。"},{en:"Make your own choice.",cn:"做你自己的选择。"}]},
+               {w:"pick",c:"挑选/捡起",s:[{en:"Pick a card.",cn:"选一张卡片。"},{en:"Pick up the trash.",cn:"把垃圾捡起来。"}]},
+               {w:"seven",c:"七",s:[{en:"Seven days.",cn:"七天。"},{en:"There are seven colors in a rainbow.",cn:"彩虹有七种颜色。"}]},
+               {w:"shall",c:"应该/将",s:[{en:"We shall go.",cn:"我们该走了。"},{en:"Shall we dance?",cn:"我们可以跳舞吗？"}]},
+               {w:"show",c:"展示/给...看",s:[{en:"Show me.",cn:"给我看看。"},{en:"Show me your drawing.",cn:"让我看看你的画。"}]},
+               {w:"six",c:"六",s:[{en:"Six ducks.",cn:"六只鸭子。"},{en:"I am six years old.",cn:"我六岁了。"}]},
+               {w:"small",c:"小的",s:[{en:"Small ant.",cn:"小蚂蚁。"},{en:"I have a small dog.",cn:"我有一只小狗。"}]},
+               {w:"start",c:"开始",s:[{en:"Start now.",cn:"现在开始。"},{en:"School starts at eight.",cn:"学校八点开始上课。"}]},
+               {w:"ten",c:"十",s:[{en:"Ten toes.",cn:"十个脚趾。"},{en:"Count from one to ten.",cn:"从一数到十。"}]},
+               {w:"today",c:"今天",s:[{en:"Not today.",cn:"今天不行。"},{en:"Today is my birthday.",cn:"今天是我的生日。"}]},
+               {w:"together",c:"一起",s:[{en:"Play together.",cn:"一起玩吧。"},{en:"Let's do it together.",cn:"我们一起做吧。"}]},
+               {w:"try",c:"尝试/努力",s:[{en:"Try hard.",cn:"努力尝试。"},{en:"Try again, you can do it!",cn:"再试一次，你能行的！"}]},
+               {w:"warm",c:"温暖的",s:[{en:"Warm hands.",cn:"温暖的手。"},{en:"The soup is warm and yummy.",cn:"汤又暖和又好吃。"}]},
+               {w:"buy",c:"买",s:[{en:"Buy a book.",cn:"买一本书。"},{en:"Can I buy some candy?",cn:"我可以买些糖果吗？"}]},
+               {w:"use",c:"使用",s:[{en:"Use a pencil.",cn:"用铅笔。"},{en:"Use your words, not hands.",cn:"用语言表达，不要动手。"}]}
+            ]
+        };
+
+        let currentList = [];
+        let currentIndex = 0;
+        
+        const card = document.getElementById('flashcard');
+        const frontWord = document.getElementById('frontWord');
+        const backWord = document.getElementById('backWord');
+        const cnMeaning = document.getElementById('cnMeaning');
+        const sentencesContainer = document.getElementById('sentencesContainer');
+        const progressBar = document.getElementById('progressBar');
+        const counterDisplay = document.getElementById('counterDisplay');
+
+        // 洗牌算法 (Fisher-Yates)
+        function shuffle(array) {
+            let currentIndex = array.length,  randomIndex;
+            while (currentIndex != 0) {
+                randomIndex = Math.floor(Math.random() * currentIndex);
+                currentIndex--;
+                [array[currentIndex], array[randomIndex]] = [
+                array[randomIndex], array[currentIndex]];
+            }
+            return array;
+        }
+
+        function changeLevel() {
+            const level = document.getElementById('levelSelector').value;
+            // 复制一份数据并洗牌
+            currentList = shuffle([...db[level]]); 
+            currentIndex = 0;
+            renderCard();
+        }
+
+        function renderCard() {
+            if (currentList.length === 0) return;
+
+            const item = currentList[currentIndex];
+            frontWord.innerText = item.w;
+            backWord.innerText = item.w;
+            cnMeaning.innerText = item.c;
+            
+            // 渲染例句（支持多条）
+            sentencesContainer.innerHTML = '';
+            item.s.forEach(st => {
+                const block = document.createElement('div');
+                block.className = 'sentence-block';
+                block.innerHTML = `<div class="en-sentence">${st.en}</div><div class="cn-sentence">${st.cn}</div>`;
+                sentencesContainer.appendChild(block);
+            });
+            
+            // 更新进度条
+            const percentage = ((currentIndex + 1) / currentList.length) * 100;
+            progressBar.style.width = percentage + "%";
+            
+            // 更新计数器
+            counterDisplay.innerText = `${currentIndex + 1} / ${currentList.length}`;
+
+            // 重置翻转
+            card.classList.remove('is-flipped');
+        }
+
+        function flipCard() {
+            card.classList.toggle('is-flipped');
+        }
+
+        function nextCard() {
+            if (currentIndex < currentList.length - 1) {
+                currentIndex++;
+                renderCard();
+            } else {
+                if(confirm("太棒了！本关单词已学完！要重新打乱顺序再练一次吗？")) {
+                    currentList = shuffle([...currentList]);
+                    currentIndex = 0;
+                    renderCard();
+                }
+            }
+        }
+
+        function prevCard() {
+            if (currentIndex > 0) {
+                currentIndex--;
+                renderCard();
+            }
+        }
+
+        // 初始化加载 Level 1
+        window.onload = function() {
+            changeLevel(); 
+        };
+    </script>
+</body>
+</html>
